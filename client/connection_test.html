@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>socket.io connection test</title>
+    <meta charset="UTF-8">
+</head>
+    <input type="text" id="msg" />
+    <input type="button" value="send" onclick="message()" />
+    <input type="button" value="disconnect" id="discon" onclick="disconnect()" />
+    <script src="https://code.jquery.com/jquery-3.7.0.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.0/socket.io.js"></script>
+    <script>
+        const socket = io("http://10.10.10.182:8005/");
+
+        socket.on("connect", () => {
+            console.log("connection server");
+        });
+
+        socket.on("connect_error", (err) => {
+            console.log(err.message);
+            console.log(err);
+            socket.connect();
+        });
+
+        socket.on("message", (data) => {
+            console.log(data.Message);
+        });
+
+        function message() {
+            socket.emit("message", {msg: $("#msg").val()});
+        }
+
+        function disconnect() {
+            socket.emit("disconnect_request");
+        }
+    </script>
+</html>

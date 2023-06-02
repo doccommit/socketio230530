@@ -1,0 +1,156 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <title>SocketIO Test</title>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/socket.io-client@3.1.0/dist/socket.io.min.js"></script>
+<!--    <script type="text/javascript" charset="utf-8">-->
+<!--        $(document).ready(function(){-->
+<!--            // const socket = io.connect("http://127.0.0.1:8005");-->
+<!--            const socket = io("http://127.0.0.1:8005", {transports: ['websocket', 'polling', 'flashsocket']});-->
+<!--            // socket.connect();-->
+
+<!--            // socket.on('connect', function() {-->
+<!--            //     socket.emit('my_event', {data: 'I\'m connected!'});-->
+<!--            // });-->
+<!--            &lt;!&ndash; connect-message_all disconnect-message_all message-message file_download-file &ndash;&gt;-->
+<!--            socket.on('disconnect', function() {-->
+<!--                $('#log').append('<br>Disconnected');-->
+<!--            });-->
+<!--            socket.on('message_all', function(msg) {-->
+<!--                $('#log').append('<br>Received: ' + msg.NOTICE);-->
+<!--            });-->
+<!--            socket.on('message', function(msg) {-->
+<!--                $('#log').append('<br>Received: ' + (msg.Message | msg.NOTICE));-->
+<!--            });-->
+<!--            socket.on('file', function(msg) {-->
+<!--                $('#log').append('<br>Received: ' + (msg.content | msg.Message | msg.NOTICE));-->
+<!--            });-->
+
+<!--            // event handler for server sent data-->
+<!--            // the data is displayed in the "Received" section of the page-->
+<!--            // handlers for the different forms in the page-->
+<!--            // these send data to the server in a variety of ways-->
+
+<!--            // $('form#emit').submit(function(event) {-->
+<!--            //     socket.emit('my_event', {data: $('#emit_data').val()});-->
+<!--            //     return false;-->
+<!--            // });-->
+<!--            // $('form#broadcast').submit(function(event) {-->
+<!--            //     socket.emit('my_broadcast_event', {data: $('#broadcast_data').val()});-->
+<!--            //     return false;-->
+<!--            // });-->
+<!--            // $('form#join').submit(function(event) {-->
+<!--            //     socket.emit('join', {room: $('#join_room').val()});-->
+<!--            //     return false;-->
+<!--            // });-->
+<!--            // $('form#leave').submit(function(event) {-->
+<!--            //     socket.emit('leave', {room: $('#leave_room').val()});-->
+<!--            //     return false;-->
+<!--            // });-->
+<!--            // $('form#send_room').submit(function(event) {-->
+<!--            //     socket.emit('my_room_event', {room: $('#room_name').val(), data: $('#room_data').val()});-->
+<!--            //     return false;-->
+<!--            // });-->
+<!--            // $('form#close').submit(function(event) {-->
+<!--            //     socket.emit('close_room', {room: $('#close_room').val()});-->
+<!--            //     return false;-->
+<!--            // });-->
+<!--            $('form#connect').submit(function(event) {-->
+<!--                console.log("???")-->
+<!--                // socket.connect()x-->
+<!--                socket.emit('connect');-->
+<!--                return false;-->
+<!--            });-->
+<!--            $('form#message').submit(function(event) {-->
+<!--                socket.emit('message', {msg: $('#emit_data').val()});-->
+<!--                return false;-->
+<!--            });-->
+<!--            $('form#message').submit(function(event) {-->
+<!--                socket.emit('message', {msg: $('#emit_data').val()});-->
+<!--                return false;-->
+<!--            });-->
+<!--            $('form#disconnect').submit(function(event) {-->
+<!--                socket.emit('disconnect');-->
+<!--                return false;-->
+<!--            });-->
+<!--            $('form#file_upload').submit(function(event) {-->
+<!--                socket.emit('file_download', {msg: $('#file_upload').val()});-->
+<!--                return false;-->
+<!--            });-->
+<!--        });-->
+<!--    </script>-->
+</head>
+<body>
+<h1>Django + SocketIO Test</h1>
+<h2>Send:</h2>
+<form id="connect" method="GET" action="#">
+    <input type="submit" value="Connect">
+</form>
+<form id="message" method="POST" action='#'>
+    <input type="text" name="emit_data" id="emit_data" placeholder="Message">
+    <input type="submit" value="Echo">
+</form>
+<form id="file_download" method="POST" action='#'>
+    <input type="text" name="file_name" id="file_name" placeholder="File name">
+    <input type="submit" value="Receive">
+</form>
+<form id="disconnect" method="POST" action="#">
+    <input type="submit" value="Disconnect">
+</form>
+<form id="file" method="POST" action="#">
+    <input type="file" name="file" id="file_upload" placeholder="File Upload" accept=".zip">
+    <input type="submit" value="File upload">
+</form>
+<h2>Receive:</h2>
+<div><p id="log"></p></div>
+<script type="text/javascript" charset="utf-8">
+    $(() => {
+        let socket = io("http://10.10.10.182:8005");
+
+        socket.on('disconnect', function() {
+            $('#log').append('<br>Disconnected');
+        });
+        socket.on('message_all', function(msg) {
+            $('#log').append('<br>Received: ' + msg.NOTICE);
+        });
+        socket.on('message', function(msg) {
+            $('#log').append('<br>Received: ' + (msg.Message | msg.NOTICE));
+        });
+        socket.on('file_download', function(msg) {
+            console.log(msg)
+            $('#log').append('<br>Received: ' + msg + " " + (msg.content | msg.Message | msg.NOTICE));
+        });
+
+        // event handler for server sent data
+        // the data is displayed in the "Received" section of the page
+        // handlers for the different forms in the page
+        // these send data to the server in a variety of ways
+
+        $('form#connect').submit(function(event) {
+            console.log("???")
+            // socket = io.connect("http://127.0.0.1:8005/");
+            socket.emit('connect');
+            return false;
+        });
+        $('form#file_download').submit(function(event) {
+            socket.emit('file_download', {file_name: $('#file_name').val()});
+            return false;
+        });
+        $('form#message').submit(function(event) {
+            socket.emit('message', {msg: $('#emit_data').val()});
+            return false;
+        });
+        $('form#disconnect').submit(function(event) {
+            socket.emit('disconnect');
+            return false;
+        });
+        $('form#file_upload').submit(function(event) {
+            socket.emit('file_download', {msg: $('#file_upload').val()});
+            return false;
+        });
+    });
+</script>
+<!-- connect-message_all disconnect-message_all message-message file_download-file -->
+</body>
+</html>
