@@ -7,15 +7,18 @@
             integrity="sha256-7GO+jepT9gJe9LB4XFf8snVOjX3iYNb0FHYr5LI1N5c="
             crossorigin="anonymous"></script>
         <script
-            src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.16.0/js/md5.min.js"
-            type="text/javascript" ></script>
+            src="https://cdnjs.cloudflare.com/ajax/libs/spark-md5/3.0.2/spark-md5.js"
+            integrity="sha512-g7AYIETEeNrSpkLB3Tk4YvLT3T5K/BfFlyDCQhENMat2hBsypQzfN9i1rq+q0RsD/kaEfhiGPz9WNyuCFOVJDw=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
         <script>
         </script>
     </head>
     <body>
         <form>
-            <input type="file" accept=".zip .dummy" id="file-selector">
-            <input type="number" id="chunk-size">
+            <input type="file" accept="audio/*, .zip, .dummy" id="file-selector">
+            <label for="chunk-size" >init: 64kb</label>
+            <input type="number" id="chunk-size" value="521472">
             <input type="button" onclick="checksum_hash()" value="run">
             <script type="text/javascript">
                 const file_selector = document.getElementById('file-selector');
@@ -24,7 +27,6 @@
                     file_list = evt.target.files;
                     console.log(file_list);
                 });
-
                 function checksum_hash() {
                     const chunk_size = parseInt($('#chunk-size').val());
                     console.log(chunk_size);
@@ -44,24 +46,25 @@
                             let file_chunk = f.slice(head, tail, f.type);
 
                             file_chunk.text().then((text) => {
-                                const hashf = md5(text).value;
-                                // $('#checksum').append(hashf);
+                                const hashf = SparkMD5.hashBinary(text, false);
+                                const percent = 100 * tail / f.size;
+                                document.getElementById('checksum').innerHTML += `<p>${ percent.toFixed(2) }% : ${ hashf }</p>`
                                 hash_array.push(for_cnt + " " + while_cnt + " " + hashf);
                             })
-                            console.log('while iter' + ++while_cnt);
+                            // console.log('while iter' + ++while_cnt);
                             head = tail;
                         }
-                        console.log('for iter end' + for_cnt);
+                        // console.log('for iter end' + for_cnt);
                     }
                     console.log('writing');
                     console.log(hash_array);
-                    $('#checksum').append(hash_array.join('\n'));
+                    // $('#checksum').append(hash_array.join('\n'));
                     console.log('done');
                     return false;
                 }
 
             </script>
         </form>
-        <p id="checksum"></p>
+        <div id="checksum"></div>
     </body>
 </html>
