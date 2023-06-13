@@ -3,35 +3,83 @@
 <head>
     <title>socket.io connection test</title>
     <meta charset="UTF-8">
-</head>
-    <input type="text" id="msg" />
-    <input type="button" value="send" onclick="message()" />
-    <input type="button" value="disconnect" id="discon" onclick="disconnect()" />
     <script src="https://code.jquery.com/jquery-3.7.0.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.0/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"></script>
     <script>
-        const socket = io("http://10.10.10.182:8005/");
+        $(() => {
+            const socket = io("http://10.10.10.182:8005/");
+            // let current_file = [];
+            let filename;
 
-        socket.on("connect", () => {
-            console.log("connection server");
-        });
+            socket.on("connect", () => {
+                console.log("connection server");
+            });
 
-        socket.on("connect_error", (err) => {
-            console.log(err.message);
-            console.log(err);
-            socket.connect();
-        });
+            socket.on("connect_error", (err) => {
+                console.log(err.message);
+                console.log(err);
+                socket.connect();
+            });
 
-        socket.on("message", (data) => {
-            console.log(data.Message);
-        });
+            socket.on("message", (data) => {
+                console.log(data.msg);
+            });
 
-        function message() {
-            socket.emit("message", {msg: $("#msg").val()});
-        }
+            socket.on("file_download", (data) => {
+                console.log(data)
+                // if(data.content) {
+                //     current_file.push(data.content);
+                //     filename = $('#filename').val()
+                //     let chunksize = $('#chunksize').val() | 524288
+                //     let body = {
+                //         file_name: filename,
+                //         chunk_size: chunksize,
+                //     }
+                //     socket.emit('file_download', body)
+                // } else if(data.msg && (data.msg === 'file_end')) {
+                //     let blob = new Blob(current_file, {type: "application/octet-stream"});
+                //     window.bto
+                // }
+            });
 
-        function disconnect() {
-            socket.emit("disconnect_request");
-        }
+            $('#message').submit(() => {
+                socket.emit("message", {msg: $("#msg").val()});
+                return false;
+            })
+
+            $('#disconnect').submit(() => {
+                socket.emit("disconnect_request");
+                return false;
+            })
+
+            $('#file_download').submit(() => {
+                filename = $('#filename').val()
+                let chunksize = $('#chunksize').val() | 524288
+                let body = {
+                    file_name: filename,
+                    chunk_size: chunksize,
+                }
+                socket.emit('file_download', body)
+                return false;
+            })
+        })
     </script>
+</head>
+<body>
+    <form id="message">
+        <label for="msg">message</label>
+        <input type="text" id="msg" />
+        <input type="submit" value="send"/>
+    </form>
+    <form id="disconnect">
+        <input type="submit" value="discon" />
+    </form>
+    <form id="file_download">
+        <label for="filename">filename</label>
+        <input type="text" id="filename" />
+        <input type="number" id="chunksize" value="524172">
+        <input type="submit" value="download"/>
+    </form>
+</body>
 </html>

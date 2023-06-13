@@ -40,7 +40,7 @@ def message(sid, data):
     room = data.get('room', None)
     msg = f'{sid}: {data["msg"]}'
     logger.info(msg)
-    sio.emit('message', {'Message': msg}, room=room)
+    sio.emit('message', {'msg': msg}, room=room)
 
 
 @sio.event
@@ -54,16 +54,17 @@ def file_download(sid, data):
     file_name = data.get('file_name', None)
 
     # 파일명이 주어지지 않으면 에러처리 합니다
-    if file_name is None:
+    if file_name is None or not file_name:
         logger.warning(f'{sid}: wrong file name - {file_name}')
         sio.emit('message', {'NOTICE': 'No file with input name'})
+        return
 
     # 클라이언트의 sid, file 명으로 chunk를 만들어줄 generator를 구분합니다
     if sid not in download_status:
         download_status[sid] = {}
 
     if file_name not in download_status[sid]:
-        chunk_size = data.get('chunk_size', 1024)
+        chunk_size = data.get('chunk_size', 524288)
         download_status[sid][file_name] = _file_download_chunk(sid, file_name, chunk_size)
 
     # 제너레이터가 출력한 값을 반환합니다
@@ -87,7 +88,7 @@ def _file_download_chunk(sid, file_name, chunk_size):
     # 파일을 전부 읽었다면 dict에서 제거합니다
     del download_status[sid][file_name]
     # 종료 메시지를 보냅니다
-    yield {'Message': 'file_end'}
+    yield {'msg': 'file_end'}
 
 
 @sio.event
@@ -117,9 +118,9 @@ def file_upload(sid, data):
                 with open(file_chunk_dir, 'rb') as cnk:
                     mrg.write(cnk.read())
 
-    progress = len(waiting_chunk_number) / total_chunk
+    progress = (1 - len(waiting_chunk_number) / total_chunk) * 100
 
-    sio.emit('file_upload', {'Message': f'Upload progress : {progress:2f}%'}, room=sid)
+    sio.emit('file_upload', {'msg': f'Upload progress : {progress:2f}%'}, room=sid)
 
 
 if __name__ == '__main__':
