@@ -4,82 +4,8 @@
     <title>SocketIO Test</title>
     <script type="text/javascript" src="http://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
     <script type="text/javascript" src="https://unpkg.com/socket.io-client@3.1.0/dist/socket.io.min.js"></script>
-<!--    <script type="text/javascript" charset="utf-8">-->
-<!--        $(document).ready(function(){-->
-<!--            // const socket = io.connect("http://127.0.0.1:8005");-->
-<!--            const socket = io("http://127.0.0.1:8005", {transports: ['websocket', 'polling', 'flashsocket']});-->
-<!--            // socket.connect();-->
-
-<!--            // socket.on('connect', function() {-->
-<!--            //     socket.emit('my_event', {data: 'I\'m connected!'});-->
-<!--            // });-->
-<!--            &lt;!&ndash; connect-message_all disconnect-message_all message-message file_download-file &ndash;&gt;-->
-<!--            socket.on('disconnect', function() {-->
-<!--                $('#log').append('<br>Disconnected');-->
-<!--            });-->
-<!--            socket.on('message_all', function(msg) {-->
-<!--                $('#log').append('<br>Received: ' + msg.NOTICE);-->
-<!--            });-->
-<!--            socket.on('message', function(msg) {-->
-<!--                $('#log').append('<br>Received: ' + (msg.Message | msg.NOTICE));-->
-<!--            });-->
-<!--            socket.on('file', function(msg) {-->
-<!--                $('#log').append('<br>Received: ' + (msg.content | msg.Message | msg.NOTICE));-->
-<!--            });-->
-
-<!--            // event handler for server sent data-->
-<!--            // the data is displayed in the "Received" section of the page-->
-<!--            // handlers for the different forms in the page-->
-<!--            // these send data to the server in a variety of ways-->
-
-<!--            // $('form#emit').submit(function(event) {-->
-<!--            //     socket.emit('my_event', {data: $('#emit_data').val()});-->
-<!--            //     return false;-->
-<!--            // });-->
-<!--            // $('form#broadcast').submit(function(event) {-->
-<!--            //     socket.emit('my_broadcast_event', {data: $('#broadcast_data').val()});-->
-<!--            //     return false;-->
-<!--            // });-->
-<!--            // $('form#join').submit(function(event) {-->
-<!--            //     socket.emit('join', {room: $('#join_room').val()});-->
-<!--            //     return false;-->
-<!--            // });-->
-<!--            // $('form#leave').submit(function(event) {-->
-<!--            //     socket.emit('leave', {room: $('#leave_room').val()});-->
-<!--            //     return false;-->
-<!--            // });-->
-<!--            // $('form#send_room').submit(function(event) {-->
-<!--            //     socket.emit('my_room_event', {room: $('#room_name').val(), data: $('#room_data').val()});-->
-<!--            //     return false;-->
-<!--            // });-->
-<!--            // $('form#close').submit(function(event) {-->
-<!--            //     socket.emit('close_room', {room: $('#close_room').val()});-->
-<!--            //     return false;-->
-<!--            // });-->
-<!--            $('form#connect').submit(function(event) {-->
-<!--                console.log("???")-->
-<!--                // socket.connect()x-->
-<!--                socket.emit('connect');-->
-<!--                return false;-->
-<!--            });-->
-<!--            $('form#message').submit(function(event) {-->
-<!--                socket.emit('message', {msg: $('#emit_data').val()});-->
-<!--                return false;-->
-<!--            });-->
-<!--            $('form#message').submit(function(event) {-->
-<!--                socket.emit('message', {msg: $('#emit_data').val()});-->
-<!--                return false;-->
-<!--            });-->
-<!--            $('form#disconnect').submit(function(event) {-->
-<!--                socket.emit('disconnect');-->
-<!--                return false;-->
-<!--            });-->
-<!--            $('form#file_upload').submit(function(event) {-->
-<!--                socket.emit('file_download', {msg: $('#file_upload').val()});-->
-<!--                return false;-->
-<!--            });-->
-<!--        });-->
-<!--    </script>-->
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/spark-md5/3.0.2/spark-md5.js"></script>
 </head>
 <body>
 <h1>Django + SocketIO Test</h1>
@@ -102,6 +28,14 @@
     <input type="file" name="file" id="file_upload" placeholder="File Upload" accept=".zip">
     <input type="submit" value="File upload">
 </form>
+
+<form>
+    <input type="file" accept="audio/*, .zip, .dummy" id="file-selector">
+    <label for="chunk-size" >init: 64kb</label>
+    <input type="number" id="chunk-size" value="521472">
+    <input type="button" onclick="checksum_hash()" value="run">
+</form>
+
 <h2>Receive:</h2>
 <div><p id="log"></p></div>
 <script type="text/javascript" charset="utf-8">
@@ -115,11 +49,11 @@
             $('#log').append('<br>Received: ' + msg.NOTICE);
         });
         socket.on('message', function(msg) {
-            $('#log').append('<br>Received: ' + (msg.Message | msg.NOTICE));
+            $('#log').append('<br>Received: ' + (msg.msg | msg.NOTICE));
         });
         socket.on('file_download', function(msg) {
             console.log(msg)
-            $('#log').append('<br>Received: ' + msg + " " + (msg.content | msg.Message | msg.NOTICE));
+            $('#log').append('<br>Received: ' + msg + " " + (msg.content | msg.msg | msg.NOTICE));
         });
 
         // event handler for server sent data
@@ -128,8 +62,6 @@
         // these send data to the server in a variety of ways
 
         $('form#connect').submit(function(event) {
-            console.log("???")
-            // socket = io.connect("http://127.0.0.1:8005/");
             socket.emit('connect');
             return false;
         });
@@ -146,11 +78,53 @@
             return false;
         });
         $('form#file_upload').submit(function(event) {
-            socket.emit('file_download', {msg: $('#file_upload').val()});
+            socket.emit('file_upload', {msg: $('#file_upload').val()});
             return false;
         });
     });
+    const file_selector = document.getElementById('file-selector');
+    let file_list = null;
+    file_selector.addEventListener('change', (evt) => {
+        file_list = evt.target.files;
+        console.log(file_list);
+    });
+    function checksum_hash() {
+        const chunk_size = parseInt($('#chunk-size').val());
+        console.log(chunk_size);
+        let for_cnt = 0;
+        file_list = $('#file-selector').get(0).files;
+        console.log(file_list);
+        console.log('start');
+        let hash_array = [];
+        for (const f of file_list) {
+            console.log('for iter start' + ++for_cnt);
+            console.log(f.size);
+            let while_cnt = 0;
+            let head = 0;
+            // let old_chunk;
+            while (head < f.size) {
+                let tail = Math.min((head + chunk_size), f.size);
+                let file_chunk = f.slice(head, tail, f.type);
+
+                file_chunk.text().then((text) => {
+                    const hashf = SparkMD5.hashBinary(text, false);
+                    const percent = 100 * tail / f.size;
+                    document.getElementById('log').innerHTML += `<p>${ percent.toFixed(2) }% | checksum : ${ hashf }</p>`
+                    hash_array.push(for_cnt + " " + while_cnt + " " + hashf);
+                })
+                // console.log('while iter' + ++while_cnt);
+                head = tail;
+            }
+            // console.log('for iter end' + for_cnt);
+        }
+        console.log('writing');
+        console.log(hash_array);
+        // $('#checksum').append(hash_array.join('\n'));
+        console.log('done');
+        return false;
+    }
 </script>
+
 <!-- connect-message_all disconnect-message_all message-message file_download-file -->
 </body>
 </html>
